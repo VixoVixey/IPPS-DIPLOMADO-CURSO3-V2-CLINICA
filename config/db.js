@@ -1,9 +1,10 @@
 import mongoose from 'mongoose'
 
-
-const MONGODB_URI = ''
-
 export const conectar = async () => {
-    await mongoose.connect( MONGODB_URI )
-    consolelog('conectado a la bd')
+  if (!process.env.MONGODB_URI) {
+    throw new Error('Define MONGODB_URI en el archivo .env')
+  }
+
+  await mongoose.connect(process.env.MONGODB_URI)
+  console.log('Conectado a la base de datos')
 }

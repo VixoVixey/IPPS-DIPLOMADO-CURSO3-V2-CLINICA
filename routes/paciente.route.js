@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { proteger } from "../middlewares/proteger"
+import { proteger } from "../middlewares/proteger.js"
 
 export const pacienteRoutes = Router()
 

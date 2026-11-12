@@ -1,4 +1,4 @@
-models/ficha.model.js
+import mongoose from 'mongoose'
 const fichaSchema = new mongoose.Schema({
   paciente: { type: mongoose.Schema.Types.ObjectId,
               ref: 'Paciente', required: true },
@@ -8,3 +8,5 @@ const fichaSchema = new mongoose.Schema({
   tratamiento: { type: String, trim: true },
   fecha: { type: Date, default: Date.now },
 }, { timestamps: true })
+
+export const Ficha = mongoose.model('Ficha', fichaSchema, 'fichas')
