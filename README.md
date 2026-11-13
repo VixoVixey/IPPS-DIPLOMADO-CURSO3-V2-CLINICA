@@ -1,61 +1,65 @@
-# Clínica · API REST
+# Evaluación 3 · API REST Clínica (Módulo 3)
 
-Continuación del proyecto del Módulo 3 del diplomado. La API usa Express para recibir peticiones y Mongoose para guardar médicos y pacientes en MongoDB.
+API REST desarrollada con Node.js, Express y MongoDB (Mongoose) para la gestión de médicos y pacientes con autenticación mediante JWT y validación de permisos por médico tratante.
 
-## Cómo levantarla
+## 📹 Demostración en Video
+- **Enlace:** https://youtu.be/fc_dd-3g8tM
 
-1. Abre la carpeta del repositorio en la terminal. Usa Node.js 20.19 o superior y Yarn. Ejecuta `yarn`.
-2. En MongoDB Atlas, crea un clúster y un usuario de base de datos con lectura y escritura en `clinica`. Agrega tu IP en **Network Access**. En **Connect → Drivers → Node.js**, copia la URI.
-3. En PowerShell, ejecuta `Copy-Item .env.example .env`. Abre `.env` y completa `MONGODB_URI` con la URI de Atlas. Agrega `/clinica` entre el host y los parámetros que empiezan con `?`. Si la contraseña contiene caracteres reservados como `@` o `#`, codifícalos para la URI.
-4. Genera una clave local con `node -p "require('node:crypto').randomBytes(32).toString('hex')"`. Copia el resultado a `JWT_SECRET` en `.env`. Ese archivo se queda en tu equipo.
-5. Ejecuta `yarn dev`. La terminal debe mostrar la conexión a MongoDB y luego la dirección `http://localhost:3001`.
+---
 
-Para comprobar el servidor, pide `GET /pacientes` en Postman sin token. Debe responder `401` con `{"error":"Falta el token"}`.
+## 🚀 Cómo levantar el proyecto
 
-## Rutas
-
-Las rutas de `/medicos` y `/pacientes` requieren `Authorization: Bearer <token>`.
-
-| Método y ruta | Resultado |
-| --- | --- |
-| `POST /auth/registro` | Crea un médico y devuelve `{ medico, token }` con 201. |
-| `POST /auth/login` | Recibe email y contraseña. Devuelve `{ medico, token }` con 200. |
-| `GET /medicos` | Lista médicos. Acepta `?especialidad=Pediatría`. |
-| `GET /medicos/perfil` | Devuelve al médico del token. |
-| `GET /medicos/:id` | Consulta un médico por ID. |
-| `GET /medicos/:id/pacientes` | Lista los pacientes de ese médico. |
-| `POST /pacientes` | Crea un paciente asociado al médico del token. |
-| `GET /pacientes` | Lista los pacientes del médico del token. Acepta `?prevision=Isapre`. |
-| `GET /pacientes/:id` | Consulta un paciente por ID. |
-| `PUT /pacientes/:id` | Actualiza los campos enviados. Requiere ser el tratante. |
-| `DELETE /pacientes/:id` | Elimina el paciente y devuelve 204. Requiere ser el tratante. |
-
-## Decisiones para explicar en la demostración
-
-- En el arranque, los imports locales llevan ruta relativa y extensión `.js`. Express escucha después de conectar a MongoDB y de esperar los índices únicos de email y RUT. Así las primeras peticiones ya tienen protección contra duplicados.
-- El paciente guarda el `ObjectId` del médico en `medico`, con una referencia al modelo `Medico`. Eso permite consultar sus pacientes con un filtro por ID y guardar los datos del médico en un solo lugar.
-- Al crear, el servicio toma el médico del token. Al editar o eliminar, MongoDB busca por ID de paciente y de tratante en la misma operación. Si no encuentra coincidencia, se consulta el ID para distinguir un paciente inexistente (404) de uno asignado a otro médico (403). La lista de campos editables deja fuera `medico`.
-- El modelo de médico genera el hash con bcrypt y elimina `password` al serializarse. Las consultas de médicos además excluyen ese campo desde MongoDB. Un middleware de Express devuelve los errores en JSON. Los índices únicos permiten detectar duplicados incluso si llegan dos solicitudes al mismo tiempo.
-
-## Demostración en Postman
-
-Usa datos ficticios. Registra a dos médicos con emails distintos y guarda sus tokens por separado. Inicia sesión con el primero. Prueba la lista de pacientes sin token (401), crea uno con el primer médico (201) y guárdate su ID. Pídelo por ID y luego consulta `GET /medicos/:id/pacientes`. Intenta editarlo con el token del segundo médico (403). Vuelve a consultar al paciente para mostrar que conservó sus datos. Repite el alta con el mismo RUT (409).
-
-Para grabar los 5 a 8 minutos, muestra los códigos de estado en Postman y luego abre el modelo y el servicio de pacientes. Explica la relación, el filtro que aplica el permiso de escritura y dos correcciones del arranque que puedas reproducir o describir.
-
-**Video de entrega:** pendiente de grabar y enlazar aquí. Antes de entregar, comprueba en una ventana de incógnito que el video de YouTube se abre.
-
-Para crear el paciente de la demo, elige **Body → raw → JSON** y envía algo como esto:
-
-```json
-{
-  "nombre": "Pedro Pérez",
-  "rut": "12.345.678-9",
-  "fechaNacimiento": "1990-01-02",
-  "prevision": "Fonasa"
-}
+1. Clonar el repositorio e instalar dependencias (requiere Node.js 20.19+ y Yarn):
+```bash
+git clone https://github.com/VixoVixey/IPPS-DIPLOMADO-CURSO3-V2-CLINICA.git
+cd IPPS-DIPLOMADO-CURSO3-V2-CLINICA
+yarn
 ```
 
-## Verificación local
+2. Configurar variables de entorno:
+   * Copia `.env.example` a `.env` (`Copy-Item .env.example .env` en PowerShell).
+   * En `MONGODB_URI`, pega tu cadena de conexión de MongoDB Atlas apuntando a la base `/clinica` (recuerda tener tu IP habilitada en Network Access).
+   * Genera una clave segura para `JWT_SECRET` ejecutando en terminal:
+     ```bash
+     node -p "require('node:crypto').randomBytes(32).toString('hex')"
+     ```
+   * Pega el resultado en `JWT_SECRET` dentro de `.env`.
 
-Se inició con `yarn dev` y MongoDB Community 8.0.20 en una base de prueba. Pasaron 34 comprobaciones HTTP, entre ellas el flujo del video, las consultas filtradas, los IDs inválidos y el borrado autorizado. La conexión a tu clúster de Atlas se comprueba después de completar tu `.env`.
+3. Iniciar el servidor en modo desarrollo:
+```bash
+yarn dev
+```
+
+El servidor quedará levantado en `http://localhost:3001` una vez confirmada la conexión a MongoDB.
+
+---
+
+## 📌 Endpoints Principales
+
+Las rutas de `/medicos` y `/pacientes` requieren enviar el header `Authorization: Bearer <token>`.
+
+### Autenticación
+- `POST /auth/registro`: Registra un nuevo médico y devuelve `{ medico, token }` (`201`).
+- `POST /auth/login`: Valida credenciales y devuelve `{ medico, token }` (`200`).
+
+### Médicos
+- `GET /medicos`: Lista los médicos registrados (soporta filtro `?especialidad=Pediatría`).
+- `GET /medicos/perfil`: Devuelve los datos del médico autenticado en el token.
+- `GET /medicos/:id`: Consulta un médico por su ID.
+- `GET /medicos/:id/pacientes`: Lista los pacientes asociados a ese médico.
+
+### Pacientes
+- `POST /pacientes`: Crea un paciente vinculado al médico del token (`201`).
+- `GET /pacientes`: Lista los pacientes del médico autenticado (soporta `?prevision=Isapre`).
+- `GET /pacientes/:id`: Consulta el detalle de un paciente por ID.
+- `PUT /pacientes/:id`: Actualiza datos del paciente (`200`). Solo permitido para el médico tratante (`403` si es otro médico).
+- `DELETE /pacientes/:id`: Elimina al paciente (`204`). Solo permitido para el médico tratante (`403` si es otro médico).
+
+---
+
+## 🧠 Decisiones Técnicas Clave
+
+- **Arranque e índices:** Express comienza a escuchar recién después de conectar a MongoDB y asegurar los índices únicos (`email` y `rut`), evitando duplicados desde la primera petición. Todos los imports locales incluyen ruta relativa y extensión `.js`.
+- **Relación Médico–Paciente:** Cada paciente guarda el `ObjectId` del médico tratante en el campo `medico` (`ref: 'Medico'`), lo que permite filtrar rápidamente sus pacientes sin duplicar datos.
+- **Regla de negocio (403 vs 404):** Al editar o eliminar, se filtra en MongoDB por ID de paciente y ID del médico del token en la misma operación. Si no hay coincidencia, se verifica si el ID del paciente existe para distinguir si no fue encontrado (`404`) o si pertenece a otro médico (`403`). Además, el campo `medico` está bloqueado en la lista de campos editables.
+- **Seguridad:** Las contraseñas se guardan como hash con `bcrypt` en el modelo y se excluyen automáticamente tanto en las consultas como al serializar las respuestas JSON.
